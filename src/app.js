@@ -1,4 +1,4 @@
-// require('dotenv').config();
+require('dotenv').config();
 const createServer = require('./Infrastructures/http/createServer');
 const container = require('./Infrastructures/container');
 
