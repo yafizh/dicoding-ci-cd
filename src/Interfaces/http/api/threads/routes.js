@@ -1,7 +1,7 @@
 const routes = (handler) => [
   {
     method: 'GET',
-    path: '/threads/{threadId}',
+    path: '/threads/:threadId',
     handler: handler.getThreadHandler,
   },
   {
@@ -11,27 +11,27 @@ const routes = (handler) => [
   },
   {
     method: 'POST',
-    path: '/threads/{threadId}/comments',
+    path: '/threads/:threadId/comments',
     handler: handler.postCommentHandler,
   },
   {
     method: 'DELETE',
-    path: '/threads/{threadId}/comments/{commentId}',
+    path: '/threads/:threadId/comments/:commentId',
     handler: handler.deleteCommentHandler,
   },
   {
     method: 'POST',
-    path: '/threads/{threadId}/comments/{commentId}/replies',
+    path: '/threads/:threadId/comments/:commentId/replies',
     handler: handler.postReplyHandler,
   },
   {
     method: 'DELETE',
-    path: '/threads/{threadId}/comments/{commentId}/replies/{replyId}',
+    path: '/threads/:threadId/comments/:commentId/replies/:replyId',
     handler: handler.deleteReplyHandler,
   },
   {
     method: 'PUT',
-    path: '/threads/{threadId}/comments/{commentId}/likes',
+    path: '/threads/:threadId/comments/:commentId/likes',
     handler: handler.putCommentLikeHandler,
   },
 ];

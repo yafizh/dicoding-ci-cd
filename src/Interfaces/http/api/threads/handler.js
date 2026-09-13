@@ -18,142 +18,128 @@ class ThreadsHandler {
     this.deleteReplyHandler = this.deleteReplyHandler.bind(this);
     this.putCommentLikeHandler = this.putCommentLikeHandler.bind(this);
   }
-  async getThreadHandler(request, h) {
+
+  async getThreadHandler(request, response) {
     const { threadId } = request.params;
     const getThreadUseCase = this._container.getInstance(GetThreadUseCase.name);
     const thread = await getThreadUseCase.execute(threadId);
-    const response = h.response({
+
+    response.status(200).json({
       status: 'success',
       data: {
         thread,
       },
     });
-    response.code(200);
-    return response;
   }
 
-  async postThreadHandler(request, h) {
+  async postThreadHandler(request, response) {
     if (!request.headers.authorization) {
-      const response = h.response({
+      response.status(401).json({
         message: 'Missing authentication',
       });
-      response.code(401);
-      return response;
+      return;
     }
 
     const addThreadUseCase = this._container.getInstance(AddThreadUseCase.name);
-    const addedThread = await addThreadUseCase.execute(request.payload, request.headers.authorization.split(' ')[1]);
-    const response = h.response({
+    const addedThread = await addThreadUseCase.execute(request.body, request.headers.authorization.split(' ')[1]);
+
+    response.status(201).json({
       status: 'success',
       data: {
         addedThread,
       },
     });
-    response.code(201);
-    return response;
   }
 
-  async postCommentHandler(request, h) {
+  async postCommentHandler(request, response) {
     if (!request.headers.authorization) {
-      const response = h.response({
+      response.status(401).json({
         message: 'Missing authentication',
       });
-      response.code(401);
-      return response;
+      return;
     }
 
     const { threadId } = request.params;
     const addCommentUseCase = this._container.getInstance(AddCommentUseCase.name);
-    const addedComment = await addCommentUseCase.execute(request.payload, threadId, request.headers.authorization.split(' ')[1]);
-    const response = h.response({
+    const addedComment = await addCommentUseCase.execute(request.body, threadId, request.headers.authorization.split(' ')[1]);
+
+    response.status(201).json({
       status: 'success',
       data: {
         addedComment,
       },
     });
-    response.code(201);
-    return response;
   }
 
-  async deleteCommentHandler(request, h) {
+  async deleteCommentHandler(request, response) {
     if (!request.headers.authorization) {
-      const response = h.response({
+      response.status(401).json({
         message: 'Missing authentication',
       });
-      response.code(401);
-      return response;
+      return;
     }
 
     const { threadId, commentId } = request.params;
     const deleteCommentUseCase = this._container.getInstance(DeleteCommentUseCase.name);
     await deleteCommentUseCase.execute(commentId, threadId, request.headers.authorization.split(' ')[1]);
 
-    const response = h.response({
+    response.status(200).json({
       status: 'success',
     });
-    response.code(200);
-    return response;
   }
-  async postReplyHandler(request, h) {
+
+  async postReplyHandler(request, response) {
     if (!request.headers.authorization) {
-      const response = h.response({
+      response.status(401).json({
         message: 'Missing authentication',
       });
-      response.code(401);
-      return response;
+      return;
     }
 
     const { threadId, commentId } = request.params;
     const addReplyUseCase = this._container.getInstance(AddReplyUseCase.name);
-    const addedReply = await addReplyUseCase.execute(request.payload, threadId, commentId, request.headers.authorization.split(' ')[1]);
-    const response = h.response({
+    const addedReply = await addReplyUseCase.execute(request.body, threadId, commentId, request.headers.authorization.split(' ')[1]);
+
+    response.status(201).json({
       status: 'success',
       data: {
         addedReply,
       },
     });
-    response.code(201);
-    return response;
   }
 
-  async deleteReplyHandler(request, h) {
+  async deleteReplyHandler(request, response) {
     if (!request.headers.authorization) {
-      const response = h.response({
+      response.status(401).json({
         message: 'Missing authentication',
       });
-      response.code(401);
-      return response;
+      return;
     }
 
     const { threadId, commentId, replyId } = request.params;
     const deleteReplyUseCase = this._container.getInstance(DeleteReplyUseCase.name);
     await deleteReplyUseCase.execute(replyId, commentId, threadId, request.headers.authorization.split(' ')[1]);
 
-    const response = h.response({
+    response.status(200).json({
       status: 'success',
     });
-    response.code(200);
-    return response;
   }
 
-  async putCommentLikeHandler(request, h) {
+  async putCommentLikeHandler(request, response) {
     if (!request.headers.authorization) {
-      const response = h.response({
+      response.status(401).json({
         message: 'Missing authentication',
       });
-      response.code(401);
-      return response;
+      return;
     }
 
     const { threadId, commentId } = request.params;
     const likeCommentUseCase = this._container.getInstance(LikeCommentUseCase.name);
     await likeCommentUseCase.execute(commentId, threadId, request.headers.authorization.split(' ')[1]);
 
-    const response = h.response({
+    response.status(200).json({
       status: 'success',
     });
-    response.code(200);
-    return response;
   }
 }
 

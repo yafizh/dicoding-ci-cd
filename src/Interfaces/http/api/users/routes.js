@@ -7,7 +7,7 @@ const routes = (handler) => [
   {
     method: 'GET',
     path: '/',
-    handler: () => ({
+    handler: (request, response) => response.json({
       value: 'Hello world!',
     }),
   },
