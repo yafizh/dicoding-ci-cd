@@ -18,7 +18,7 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         port: ${{ secrets.SSH_PORT }}
         script: |
-          cd ~/auth-api
+          cd ~/dicoding-ci-cd
           git pull origin master
           npm ci --omit=dev --no-audit --no-fund
           npm run migrate up
