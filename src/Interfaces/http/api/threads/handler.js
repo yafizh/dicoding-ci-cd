@@ -4,6 +4,7 @@ const GetThreadUseCase = require('../../../../Applications/use_case/GetThreadUse
 const DeleteCommentUseCase = require('../../../../Applications/use_case/DeleteCommentUseCase');
 const AddReplyUseCase = require('../../../../Applications/use_case/AddReplyUseCase');
 const DeleteReplyUseCase = require('../../../../Applications/use_case/DeleteReplyUseCase');
+const LikeCommentUseCase = require('../../../../Applications/use_case/LikeCommentUseCase');
 
 class ThreadsHandler {
   constructor(container) {
@@ -15,6 +16,7 @@ class ThreadsHandler {
     this.deleteCommentHandler = this.deleteCommentHandler.bind(this);
     this.postReplyHandler = this.postReplyHandler.bind(this);
     this.deleteReplyHandler = this.deleteReplyHandler.bind(this);
+    this.putCommentLikeHandler = this.putCommentLikeHandler.bind(this);
   }
   async getThreadHandler(request, h) {
     const { threadId } = request.params;
@@ -126,6 +128,26 @@ class ThreadsHandler {
     const { threadId, commentId, replyId } = request.params;
     const deleteReplyUseCase = this._container.getInstance(DeleteReplyUseCase.name);
     await deleteReplyUseCase.execute(replyId, commentId, threadId, request.headers.authorization.split(' ')[1]);
+
+    const response = h.response({
+      status: 'success',
+    });
+    response.code(200);
+    return response;
+  }
+
+  async putCommentLikeHandler(request, h) {
+    if (!request.headers.authorization) {
+      const response = h.response({
+        message: 'Missing authentication',
+      });
+      response.code(401);
+      return response;
+    }
+
+    const { threadId, commentId } = request.params;
+    const likeCommentUseCase = this._container.getInstance(LikeCommentUseCase.name);
+    await likeCommentUseCase.execute(commentId, threadId, request.headers.authorization.split(' ')[1]);
 
     const response = h.response({
       status: 'success',

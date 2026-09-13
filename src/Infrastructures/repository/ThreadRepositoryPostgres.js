@@ -92,6 +92,7 @@ class ThreadRepositoryPostgres extends ThreadRepository {
         if (comment.is_delete) comment.content = '**komentar telah dihapus**';
         comment.username = await this._userRepositoryPostgres.getUsernameById(comment.owner);
         comment.replies = await this.getRepliesByCommentId(comment.id);
+        comment.likeCount = await this.getLikeCountByCommentId(comment.id);
         return comment;
       })
     );
@@ -204,6 +205,50 @@ class ThreadRepositoryPostgres extends ThreadRepository {
     const { content } = result.rows[0];
 
     return content;
+  }
+
+  async likeComment(commentId, owner) {
+    const id = `like-${this._idGenerator()}`;
+
+    const query = {
+      text: 'INSERT INTO comment_likes VALUES($1, $2, $3) RETURNING id',
+      values: [id, commentId, owner],
+    };
+
+    await this._pool.query(query);
+    return true;
+  }
+
+  async unlikeComment(commentId, owner) {
+    const query = {
+      text: 'DELETE FROM comment_likes WHERE comment = $1 AND owner = $2',
+      values: [commentId, owner],
+    };
+
+    await this._pool.query(query);
+    return true;
+  }
+
+  async verifyCommentLike(commentId, owner) {
+    const query = {
+      text: 'SELECT id FROM comment_likes WHERE comment = $1 AND owner = $2',
+      values: [commentId, owner],
+    };
+
+    const result = await this._pool.query(query);
+
+    return result.rowCount > 0;
+  }
+
+  async getLikeCountByCommentId(commentId) {
+    const query = {
+      text: 'SELECT id FROM comment_likes WHERE comment = $1',
+      values: [commentId],
+    };
+
+    const result = await this._pool.query(query);
+
+    return result.rowCount;
   }
 }
 
