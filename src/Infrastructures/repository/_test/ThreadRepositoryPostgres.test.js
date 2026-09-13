@@ -6,6 +6,9 @@ const AddedThread = require('../../../Domains/threads/entities/AddedThread');
 const AddComment = require('../../../Domains/threads/entities/AddComment');
 const AddedComment = require('../../../Domains/threads/entities/AddedComment');
 const CommentsTableTestHelper = require('../../../../tests/CommentsTableTestHelper');
+const RepliesTableTestHelper = require('../../../../tests/RepliesTableTestHelper');
+const AddReply = require('../../../Domains/threads/entities/AddReply');
+const AddedReply = require('../../../Domains/threads/entities/AddedReply');
 const UsersTableTestHelper = require('../../../../tests/UsersTableTestHelper');
 const Thread = require('../../../Domains/threads/entities/Thread');
 const NotFoundError = require('../../../Commons/exceptions/NotFoundError');
@@ -13,6 +16,7 @@ const AuthorizationError = require('../../../Commons/exceptions/AuthorizationErr
 
 describe('ThreadsRepositoryPostgres', () => {
   afterEach(async () => {
+    await RepliesTableTestHelper.cleanTable();
     await CommentsTableTestHelper.cleanTable();
     await ThreadsTableTestHelper.cleanTable();
     await UsersTableTestHelper.cleanTable();
@@ -275,6 +279,155 @@ describe('ThreadsRepositoryPostgres', () => {
           owner: owner,
         })
       );
+    });
+  });
+
+  describe('addReply function', () => {
+    it('should persist reply and return added reply correctly', async () => {
+      // Arrange
+      const addReply = new AddReply({
+        content: 'Dicoding Indonesia',
+      });
+      const fakeIdGenerator = () => '123'; // stub!
+      const owner = 'user-123';
+      const comment = 'comment-123';
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, fakeIdGenerator);
+
+      // Action
+      await threadRepositoryPostgres.addReply(addReply, comment, owner);
+
+      // Assert
+      const reply = await RepliesTableTestHelper.findRepliesById('reply-123');
+      expect(reply).toHaveLength(1);
+    });
+
+    it('should return added reply correctly', async () => {
+      const addReply = new AddReply({
+        content: 'Dicoding Indonesia',
+      });
+      const fakeIdGenerator = () => '123'; // stub!
+      const comment = 'comment-123';
+      const owner = 'user-123';
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, fakeIdGenerator);
+
+      // Action
+      const addedReply = await threadRepositoryPostgres.addReply(addReply, comment, owner);
+
+      // Assert
+      expect(addedReply).toStrictEqual(
+        new AddedReply({
+          id: 'reply-123',
+          content: addReply.content,
+          owner: owner,
+        })
+      );
+    });
+  });
+
+  describe('getReplyById function', () => {
+    it('should return not found', async () => {
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {});
+
+      // Assert
+      await expect(threadRepositoryPostgres.getReplyById('reply-123')).rejects.toThrowError(NotFoundError);
+    });
+
+    it('should return reply correcly', async () => {
+      const fakeIdGenerator = () => '123'; // stub!
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, fakeIdGenerator);
+
+      // Action
+      await UsersTableTestHelper.addUser({});
+      await ThreadsTableTestHelper.addThreads({});
+      await CommentsTableTestHelper.addComment({});
+      await RepliesTableTestHelper.addReply({ content: 'content' });
+      const reply = await threadRepositoryPostgres.getReplyById('reply-123');
+
+      // Assert
+      expect(reply).toStrictEqual('content');
+    });
+  });
+
+  describe('checkOwnerReply function', () => {
+    it('should throw authorization error when user is not the owner', async () => {
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {});
+
+      // Assert
+      await expect(threadRepositoryPostgres.checkOwnerReply('reply-123', 'user-123')).rejects.toThrowError(AuthorizationError);
+    });
+
+    it('should return reply correcly', async () => {
+      const fakeIdGenerator = () => '123'; // stub!
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, fakeIdGenerator);
+
+      // Action
+      await UsersTableTestHelper.addUser({});
+      await ThreadsTableTestHelper.addThreads({});
+      await CommentsTableTestHelper.addComment({});
+      await RepliesTableTestHelper.addReply({ content: 'content' });
+      const reply = await threadRepositoryPostgres.checkOwnerReply('reply-123', 'user-123');
+
+      // Assert
+      expect(reply).toStrictEqual('content');
+    });
+  });
+
+  describe('getRepliesByCommentId function', () => {
+    it('should return empty array when comment has no reply', async () => {
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {});
+
+      // Assert
+      expect(await threadRepositoryPostgres.getRepliesByCommentId('comment-123')).toStrictEqual([]);
+    });
+
+    it('should return replies correcly', async () => {
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {});
+
+      // Action
+      await UsersTableTestHelper.addUser({});
+      await ThreadsTableTestHelper.addThreads({});
+      await CommentsTableTestHelper.addComment({});
+      await RepliesTableTestHelper.addReply({});
+
+      // Assert
+      const replies = await threadRepositoryPostgres.getRepliesByCommentId('comment-123');
+      expect(replies).toHaveLength(1);
+      expect(replies[0].id).toStrictEqual('reply-123');
+      expect(replies[0].username).toStrictEqual('dicoding');
+      expect(replies[0].content).toStrictEqual('Dicoding Indonesia');
+    });
+
+    it('should mask content of deleted reply', async () => {
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {});
+
+      // Action
+      await UsersTableTestHelper.addUser({});
+      await ThreadsTableTestHelper.addThreads({});
+      await CommentsTableTestHelper.addComment({});
+      await RepliesTableTestHelper.addReply({});
+      await threadRepositoryPostgres.deleteReply('reply-123');
+
+      // Assert
+      const replies = await threadRepositoryPostgres.getRepliesByCommentId('comment-123');
+      expect(replies[0].content).toStrictEqual('**balasan telah dihapus**');
+    });
+  });
+
+  describe('deleteReply function', () => {
+    it('should return true', async () => {
+      const fakeIdGenerator = () => '123'; // stub!
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, fakeIdGenerator);
+
+      // Action
+      await ThreadsTableTestHelper.addThreads({});
+      await CommentsTableTestHelper.addComment({});
+      await RepliesTableTestHelper.addReply({});
+      const deletedReply = await threadRepositoryPostgres.deleteReply('reply-123');
+
+      // Assert
+      expect(deletedReply).toStrictEqual(true);
+      const reply = await RepliesTableTestHelper.findRepliesById('reply-123');
+      expect(reply[0].is_delete).toStrictEqual(true);
     });
   });
 });

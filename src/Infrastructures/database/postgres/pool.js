@@ -15,9 +15,6 @@ const prodConfig = {
   user: process.env.PGUSER,
   password: process.env.PGPASSWORD,
   database: process.env.PGDATABASE,
-  ssl: {
-    rejectUnauthorized: false,
-  },
 };
 
 const pool = process.env.NODE_ENV === 'test' ? new Pool(testConfig) : new Pool(prodConfig);

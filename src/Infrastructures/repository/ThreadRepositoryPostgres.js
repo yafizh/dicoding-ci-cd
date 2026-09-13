@@ -1,6 +1,7 @@
 const AddedThread = require('../../Domains/threads/entities/AddedThread');
 const Thread = require('../../Domains/threads/entities/Thread');
 const AddedComment = require('../../Domains/threads/entities/AddedComment');
+const AddedReply = require('../../Domains/threads/entities/AddedReply');
 const ThreadRepository = require('../../Domains/threads/ThreadRepository');
 const NotFoundError = require('../../Commons/exceptions/NotFoundError');
 const AuthorizationError = require('../../Commons/exceptions/AuthorizationError');
@@ -90,6 +91,7 @@ class ThreadRepositoryPostgres extends ThreadRepository {
       result.rows.map(async (comment) => {
         if (comment.is_delete) comment.content = '**komentar telah dihapus**';
         comment.username = await this._userRepositoryPostgres.getUsernameById(comment.owner);
+        comment.replies = await this.getRepliesByCommentId(comment.id);
         return comment;
       })
     );
@@ -120,6 +122,83 @@ class ThreadRepositoryPostgres extends ThreadRepository {
 
     if (!result.rowCount) {
       throw new AuthorizationError('tidak dapat menghapus komentar');
+    }
+
+    const { content } = result.rows[0];
+
+    return content;
+  }
+
+  async addReply(payload, comment, owner) {
+    const { content } = payload;
+    const id = `reply-${this._idGenerator()}`;
+
+    const query = {
+      text: 'INSERT INTO replies VALUES($1, $2, $3, $4, false) RETURNING id, content, owner',
+      values: [id, comment, owner, content],
+    };
+
+    const result = await this._pool.query(query);
+
+    return new AddedReply({ ...result.rows[0] });
+  }
+
+  async deleteReply(replyId) {
+    const query = {
+      text: 'UPDATE replies SET is_delete=$1 WHERE id=$2',
+      values: [true, replyId],
+    };
+
+    await this._pool.query(query);
+    return true;
+  }
+
+  async getRepliesByCommentId(id) {
+    const query = {
+      text: 'SELECT * FROM replies WHERE comment = $1 ORDER BY date ASC',
+      values: [id],
+    };
+    const result = await this._pool.query(query);
+
+    if (!result.rowCount) {
+      return [];
+    }
+
+    return Promise.all(
+      result.rows.map(async (reply) => {
+        if (reply.is_delete) reply.content = '**balasan telah dihapus**';
+        reply.username = await this._userRepositoryPostgres.getUsernameById(reply.owner);
+        return reply;
+      })
+    );
+  }
+
+  async getReplyById(id) {
+    const query = {
+      text: 'SELECT * FROM replies WHERE id = $1',
+      values: [id],
+    };
+    const result = await this._pool.query(query);
+
+    if (!result.rowCount) {
+      throw new NotFoundError('balasan tidak ditemukan');
+    }
+
+    const { content } = result.rows[0];
+
+    return content;
+  }
+
+  async checkOwnerReply(replyId, userId) {
+    const query = {
+      text: 'SELECT * FROM replies WHERE id = $1 AND owner = $2',
+      values: [replyId, userId],
+    };
+
+    const result = await this._pool.query(query);
+
+    if (!result.rowCount) {
+      throw new AuthorizationError('tidak dapat menghapus balasan');
     }
 
     const { content } = result.rows[0];

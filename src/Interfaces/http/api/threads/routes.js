@@ -47,6 +47,30 @@ const routes = (handler) => [
       },
     },
   },
+  {
+    method: 'POST',
+    path: '/threads/{threadId}/comments/{commentId}/replies',
+    handler: handler.postReplyHandler,
+    options: {
+      plugins: {
+        'hapi-rate-limit': {
+          pathLimit: 90,
+        },
+      },
+    },
+  },
+  {
+    method: 'DELETE',
+    path: '/threads/{threadId}/comments/{commentId}/replies/{replyId}',
+    handler: handler.deleteReplyHandler,
+    options: {
+      plugins: {
+        'hapi-rate-limit': {
+          pathLimit: 90,
+        },
+      },
+    },
+  },
 ];
 
 module.exports = routes;

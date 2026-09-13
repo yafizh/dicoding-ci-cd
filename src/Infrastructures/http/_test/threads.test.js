@@ -2,6 +2,8 @@ const pool = require('../../database/postgres/pool');
 const ThreadsTableTestHelper = require('../../../../tests/ThreadsTableTestHelper');
 const AuthenticationsTableTestHelper = require('../../../../tests/AuthenticationsTableTestHelper');
 const UsersTableTestHelper = require('../../../../tests/UsersTableTestHelper');
+const CommentsTableTestHelper = require('../../../../tests/CommentsTableTestHelper');
+const RepliesTableTestHelper = require('../../../../tests/RepliesTableTestHelper');
 const container = require('../../container');
 const createServer = require('../createServer');
 const ServerTestHelper = require('../../../../tests/ServerTestHelper');
@@ -34,6 +36,8 @@ describe('/threads endpoint', () => {
     });
   });
   afterEach(async () => {
+    await RepliesTableTestHelper.cleanTable();
+    await CommentsTableTestHelper.cleanTable();
     await ThreadsTableTestHelper.cleanTable();
     await UsersTableTestHelper.cleanTable();
     await AuthenticationsTableTestHelper.cleanTable();
@@ -398,6 +402,350 @@ describe('/threads endpoint', () => {
       const responseJson = JSON.parse(response.payload);
       expect(response.statusCode).toEqual(200);
       expect(responseJson.status).toEqual('success');
+    });
+  });
+
+  describe('when POST /threads/{threadId}/comments/{commentId}/replies', () => {
+    it('should response 401 when request with No Authentication', async () => {
+      const server = await createServer(container);
+
+      // Action
+      const response = await server.inject({
+        method: 'POST',
+        url: `/threads/thread-123/comments/comment-123/replies`,
+        payload: {
+          content: 'dicoding',
+        },
+      });
+
+      // Assert
+      const responseJson = JSON.parse(response.payload);
+      expect(response.statusCode).toEqual(401);
+      expect(responseJson.message).toEqual('Missing authentication');
+    });
+
+    it('should response 201 and persisted reply', async () => {
+      const server = await createServer(container);
+
+      const accessToken = await ServerTestHelper.getAccessToken();
+      const { token } = accessToken[0];
+
+      const addedThread = await server.inject({
+        method: 'POST',
+        url: '/threads',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          title: 'dicoding',
+          body: 'Dicoding Indonesia',
+        },
+      });
+
+      const addedComment = await server.inject({
+        method: 'POST',
+        url: `/threads/${JSON.parse(addedThread.payload).data.addedThread.id}/comments`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          content: 'dicoding',
+        },
+      });
+
+      // Action
+      const response = await server.inject({
+        method: 'POST',
+        url: `/threads/${JSON.parse(addedThread.payload).data.addedThread.id}/comments/${JSON.parse(addedComment.payload).data.addedComment.id}/replies`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          content: 'sebuah balasan',
+        },
+      });
+
+      // Assert
+      const responseJson = JSON.parse(response.payload);
+      expect(response.statusCode).toEqual(201);
+      expect(responseJson.status).toEqual('success');
+      expect(responseJson.data.addedReply).toBeDefined();
+    });
+
+    it('should response 404 when thread not found', async () => {
+      const server = await createServer(container);
+
+      const accessToken = await ServerTestHelper.getAccessToken();
+      const { token } = accessToken[0];
+
+      // Action
+      const response = await server.inject({
+        method: 'POST',
+        url: `/threads/thread-xxx/comments/comment-xxx/replies`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          content: 'sebuah balasan',
+        },
+      });
+
+      // Assert
+      const responseJson = JSON.parse(response.payload);
+      expect(response.statusCode).toEqual(404);
+      expect(responseJson.status).toEqual('fail');
+      expect(responseJson.message).toEqual('thread tidak ditemukan');
+    });
+
+    it('should response 404 when comment not found', async () => {
+      const server = await createServer(container);
+
+      const accessToken = await ServerTestHelper.getAccessToken();
+      const { token } = accessToken[0];
+
+      const addedThread = await server.inject({
+        method: 'POST',
+        url: '/threads',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          title: 'dicoding',
+          body: 'Dicoding Indonesia',
+        },
+      });
+
+      // Action
+      const response = await server.inject({
+        method: 'POST',
+        url: `/threads/${JSON.parse(addedThread.payload).data.addedThread.id}/comments/comment-xxx/replies`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          content: 'sebuah balasan',
+        },
+      });
+
+      // Assert
+      const responseJson = JSON.parse(response.payload);
+      expect(response.statusCode).toEqual(404);
+      expect(responseJson.status).toEqual('fail');
+      expect(responseJson.message).toEqual('comment tidak ditemukan');
+    });
+
+    it('should response 400 when request payload not contain needed property', async () => {
+      const server = await createServer(container);
+
+      const accessToken = await ServerTestHelper.getAccessToken();
+      const { token } = accessToken[0];
+
+      const addedThread = await server.inject({
+        method: 'POST',
+        url: '/threads',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          title: 'dicoding',
+          body: 'Dicoding Indonesia',
+        },
+      });
+
+      const addedComment = await server.inject({
+        method: 'POST',
+        url: `/threads/${JSON.parse(addedThread.payload).data.addedThread.id}/comments`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          content: 'dicoding',
+        },
+      });
+
+      // Action
+      const response = await server.inject({
+        method: 'POST',
+        url: `/threads/${JSON.parse(addedThread.payload).data.addedThread.id}/comments/${JSON.parse(addedComment.payload).data.addedComment.id}/replies`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {},
+      });
+
+      // Assert
+      const responseJson = JSON.parse(response.payload);
+      expect(response.statusCode).toEqual(400);
+      expect(responseJson.status).toEqual('fail');
+      expect(responseJson.message).toEqual('tidak dapat membuat balasan baru karena properti yang dibutuhkan tidak ada');
+    });
+
+    it('should response 400 when request payload not meet data type specification', async () => {
+      const server = await createServer(container);
+
+      const accessToken = await ServerTestHelper.getAccessToken();
+      const { token } = accessToken[0];
+
+      const addedThread = await server.inject({
+        method: 'POST',
+        url: '/threads',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          title: 'dicoding',
+          body: 'Dicoding Indonesia',
+        },
+      });
+
+      const addedComment = await server.inject({
+        method: 'POST',
+        url: `/threads/${JSON.parse(addedThread.payload).data.addedThread.id}/comments`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          content: 'dicoding',
+        },
+      });
+
+      // Action
+      const response = await server.inject({
+        method: 'POST',
+        url: `/threads/${JSON.parse(addedThread.payload).data.addedThread.id}/comments/${JSON.parse(addedComment.payload).data.addedComment.id}/replies`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          content: ['Dicoding Indonesia'],
+        },
+      });
+
+      // Assert
+      const responseJson = JSON.parse(response.payload);
+      expect(response.statusCode).toEqual(400);
+      expect(responseJson.status).toEqual('fail');
+      expect(responseJson.message).toEqual('tidak dapat membuat balasan baru karena tipe data tidak sesuai');
+    });
+  });
+
+  describe('when DELETE /threads/{threadId}/comments/{commentId}/replies/{replyId}', () => {
+    it('should response 401 when request with No Authentication', async () => {
+      const server = await createServer(container);
+
+      // Action
+      const response = await server.inject({
+        method: 'DELETE',
+        url: `/threads/thread-123/comments/comment-123/replies/reply-123`,
+      });
+
+      // Assert
+      const responseJson = JSON.parse(response.payload);
+      expect(response.statusCode).toEqual(401);
+      expect(responseJson.message).toEqual('Missing authentication');
+    });
+
+    it('should response 200 and soft delete the reply', async () => {
+      const server = await createServer(container);
+
+      const accessToken = await ServerTestHelper.getAccessToken();
+      const { token } = accessToken[0];
+
+      const addedThread = await server.inject({
+        method: 'POST',
+        url: '/threads',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          title: 'dicoding',
+          body: 'Dicoding Indonesia',
+        },
+      });
+
+      const addedComment = await server.inject({
+        method: 'POST',
+        url: `/threads/${JSON.parse(addedThread.payload).data.addedThread.id}/comments`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          content: 'dicoding',
+        },
+      });
+
+      const addedReply = await server.inject({
+        method: 'POST',
+        url: `/threads/${JSON.parse(addedThread.payload).data.addedThread.id}/comments/${JSON.parse(addedComment.payload).data.addedComment.id}/replies`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          content: 'sebuah balasan',
+        },
+      });
+
+      // Action
+      const response = await server.inject({
+        method: 'DELETE',
+        url: `/threads/${JSON.parse(addedThread.payload).data.addedThread.id}/comments/${JSON.parse(addedComment.payload).data.addedComment.id}/replies/${JSON.parse(addedReply.payload).data.addedReply.id}`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // Assert
+      const responseJson = JSON.parse(response.payload);
+      expect(response.statusCode).toEqual(200);
+      expect(responseJson.status).toEqual('success');
+
+      const replies = await RepliesTableTestHelper.findRepliesById(JSON.parse(addedReply.payload).data.addedReply.id);
+      expect(replies[0].is_delete).toEqual(true);
+    });
+
+    it('should response 404 when reply not found', async () => {
+      const server = await createServer(container);
+
+      const accessToken = await ServerTestHelper.getAccessToken();
+      const { token } = accessToken[0];
+
+      const addedThread = await server.inject({
+        method: 'POST',
+        url: '/threads',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          title: 'dicoding',
+          body: 'Dicoding Indonesia',
+        },
+      });
+
+      const addedComment = await server.inject({
+        method: 'POST',
+        url: `/threads/${JSON.parse(addedThread.payload).data.addedThread.id}/comments`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          content: 'dicoding',
+        },
+      });
+
+      // Action
+      const response = await server.inject({
+        method: 'DELETE',
+        url: `/threads/${JSON.parse(addedThread.payload).data.addedThread.id}/comments/${JSON.parse(addedComment.payload).data.addedComment.id}/replies/reply-xxx`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // Assert
+      const responseJson = JSON.parse(response.payload);
+      expect(response.statusCode).toEqual(404);
+      expect(responseJson.status).toEqual('fail');
+      expect(responseJson.message).toEqual('balasan tidak ditemukan');
     });
   });
 });
