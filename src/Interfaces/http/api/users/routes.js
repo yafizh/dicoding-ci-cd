@@ -8,7 +8,7 @@ const routes = (handler) => [
     method: 'GET',
     path: '/',
     handler: (request, response) => response.json({
-      value: 'Hello world! Express Here!',
+      value: 'Hello world!',
     }),
   },
 ];
