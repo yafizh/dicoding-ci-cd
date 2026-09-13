@@ -32,9 +32,9 @@ describe('AddReplyUseCase', () => {
     };
 
     /** mocking needed function */
-    mockThreadRepository.addReply = jest.fn().mockImplementation(() => Promise.resolve(expectedAddedReply));
-    mockThreadRepository.getThreadById = jest.fn().mockImplementation(() => Promise.resolve(thread));
-    mockThreadRepository.getCommentById = jest.fn().mockImplementation(() => Promise.resolve(comment));
+    mockThreadRepository.addReply = vi.fn().mockImplementation(() => Promise.resolve(expectedAddedReply));
+    mockThreadRepository.getThreadById = vi.fn().mockImplementation(() => Promise.resolve(thread));
+    mockThreadRepository.getCommentById = vi.fn().mockImplementation(() => Promise.resolve(comment));
 
     /** creating use case instance */
     const addReplyUseCase = new AddReplyUseCase({

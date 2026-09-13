@@ -31,7 +31,7 @@ describe('AddThreadUseCase', () => {
     };
 
     /** mocking needed function */
-    mockThreadRepository.getThreadById = jest.fn().mockImplementation(() => Promise.resolve(expectedThread));
+    mockThreadRepository.getThreadById = vi.fn().mockImplementation(() => Promise.resolve(expectedThread));
 
     /** creating use case instance */
     const getThreadUseCase = new GetThreadUseCase({

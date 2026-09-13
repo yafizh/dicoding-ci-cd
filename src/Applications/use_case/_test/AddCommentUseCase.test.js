@@ -13,7 +13,7 @@ describe('AddCommentUseCase', () => {
       content: 'dicoding',
     };
 
-    thread = 'thread-123';
+    const thread = 'thread-123';
 
     const expectedAddedComment = new AddedComment({
       id: 'comment-123',
@@ -31,8 +31,8 @@ describe('AddCommentUseCase', () => {
     };
 
     /** mocking needed function */
-    mockThreadRepository.addComment = jest.fn().mockImplementation(() => Promise.resolve(expectedAddedComment));
-    mockThreadRepository.getThreadById = jest.fn().mockImplementation(() => Promise.resolve(thread));
+    mockThreadRepository.addComment = vi.fn().mockImplementation(() => Promise.resolve(expectedAddedComment));
+    mockThreadRepository.getThreadById = vi.fn().mockImplementation(() => Promise.resolve(thread));
 
     /** creating use case instance */
     const getCommentUseCase = new AddCommentUseCase({

@@ -43,10 +43,10 @@ describe('AddThreadUseCase', () => {
     };
 
     /** mocking needed function */
-    mockThreadRepository.getThreadById = jest.fn().mockImplementation(() => Promise.resolve(expectedThread));
-    mockThreadRepository.getCommentById = jest.fn().mockImplementation(() => Promise.resolve(expectedComment));
-    mockThreadRepository.checkOwnerComment = jest.fn().mockImplementation(() => Promise.resolve(expectedCheckOwnerComment));
-    mockThreadRepository.deleteComment = jest.fn().mockImplementation(() => Promise.resolve(expectedDeletedComment));
+    mockThreadRepository.getThreadById = vi.fn().mockImplementation(() => Promise.resolve(expectedThread));
+    mockThreadRepository.getCommentById = vi.fn().mockImplementation(() => Promise.resolve(expectedComment));
+    mockThreadRepository.checkOwnerComment = vi.fn().mockImplementation(() => Promise.resolve(expectedCheckOwnerComment));
+    mockThreadRepository.deleteComment = vi.fn().mockImplementation(() => Promise.resolve(expectedDeletedComment));
 
     /** creating use case instance */
     const deleteCommentUseCase = new DeleteCommentUseCase({

@@ -40,11 +40,11 @@ describe('LikeCommentUseCase', () => {
     const mockThreadRepository = new ThreadRepository();
 
     /** mocking needed function */
-    mockThreadRepository.getThreadById = jest.fn().mockImplementation(() => Promise.resolve(expectedThread));
-    mockThreadRepository.getCommentById = jest.fn().mockImplementation(() => Promise.resolve(expectedComment));
-    mockThreadRepository.verifyCommentLike = jest.fn().mockImplementation(() => Promise.resolve(false));
-    mockThreadRepository.likeComment = jest.fn().mockImplementation(() => Promise.resolve(expectedLikedComment));
-    mockThreadRepository.unlikeComment = jest.fn().mockImplementation(() => Promise.resolve(true));
+    mockThreadRepository.getThreadById = vi.fn().mockImplementation(() => Promise.resolve(expectedThread));
+    mockThreadRepository.getCommentById = vi.fn().mockImplementation(() => Promise.resolve(expectedComment));
+    mockThreadRepository.verifyCommentLike = vi.fn().mockImplementation(() => Promise.resolve(false));
+    mockThreadRepository.likeComment = vi.fn().mockImplementation(() => Promise.resolve(expectedLikedComment));
+    mockThreadRepository.unlikeComment = vi.fn().mockImplementation(() => Promise.resolve(true));
 
     /** creating use case instance */
     const likeCommentUseCase = new LikeCommentUseCase({
@@ -72,11 +72,11 @@ describe('LikeCommentUseCase', () => {
     const mockThreadRepository = new ThreadRepository();
 
     /** mocking needed function */
-    mockThreadRepository.getThreadById = jest.fn().mockImplementation(() => Promise.resolve(expectedThread));
-    mockThreadRepository.getCommentById = jest.fn().mockImplementation(() => Promise.resolve(expectedComment));
-    mockThreadRepository.verifyCommentLike = jest.fn().mockImplementation(() => Promise.resolve(true));
-    mockThreadRepository.likeComment = jest.fn().mockImplementation(() => Promise.resolve(true));
-    mockThreadRepository.unlikeComment = jest.fn().mockImplementation(() => Promise.resolve(expectedUnlikedComment));
+    mockThreadRepository.getThreadById = vi.fn().mockImplementation(() => Promise.resolve(expectedThread));
+    mockThreadRepository.getCommentById = vi.fn().mockImplementation(() => Promise.resolve(expectedComment));
+    mockThreadRepository.verifyCommentLike = vi.fn().mockImplementation(() => Promise.resolve(true));
+    mockThreadRepository.likeComment = vi.fn().mockImplementation(() => Promise.resolve(true));
+    mockThreadRepository.unlikeComment = vi.fn().mockImplementation(() => Promise.resolve(expectedUnlikedComment));
 
     /** creating use case instance */
     const likeCommentUseCase = new LikeCommentUseCase({

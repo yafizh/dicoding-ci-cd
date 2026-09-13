@@ -22,17 +22,17 @@ describe('GetAuthenticationUseCase', () => {
     const mockPasswordHash = new PasswordHash();
 
     // Mocking
-    mockUserRepository.getPasswordByUsername = jest.fn()
+    mockUserRepository.getPasswordByUsername = vi.fn()
       .mockImplementation(() => Promise.resolve('encrypted_password'));
-    mockPasswordHash.comparePassword = jest.fn()
+    mockPasswordHash.comparePassword = vi.fn()
       .mockImplementation(() => Promise.resolve());
-    mockAuthenticationTokenManager.createAccessToken = jest.fn()
+    mockAuthenticationTokenManager.createAccessToken = vi.fn()
       .mockImplementation(() => Promise.resolve(expectedAuthentication.accessToken));
-    mockAuthenticationTokenManager.createRefreshToken = jest.fn()
+    mockAuthenticationTokenManager.createRefreshToken = vi.fn()
       .mockImplementation(() => Promise.resolve(expectedAuthentication.refreshToken));
-    mockUserRepository.getIdByUsername = jest.fn()
+    mockUserRepository.getIdByUsername = vi.fn()
       .mockImplementation(() => Promise.resolve('user-123'));
-    mockAuthenticationRepository.addToken = jest.fn()
+    mockAuthenticationRepository.addToken = vi.fn()
       .mockImplementation(() => Promise.resolve());
 
     // create use case instance

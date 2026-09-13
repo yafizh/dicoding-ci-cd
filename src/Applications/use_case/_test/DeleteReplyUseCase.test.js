@@ -49,11 +49,11 @@ describe('DeleteReplyUseCase', () => {
     };
 
     /** mocking needed function */
-    mockThreadRepository.getThreadById = jest.fn().mockImplementation(() => Promise.resolve(expectedThread));
-    mockThreadRepository.getCommentById = jest.fn().mockImplementation(() => Promise.resolve(expectedComment));
-    mockThreadRepository.getReplyById = jest.fn().mockImplementation(() => Promise.resolve(expectedReply));
-    mockThreadRepository.checkOwnerReply = jest.fn().mockImplementation(() => Promise.resolve(expectedCheckOwnerReply));
-    mockThreadRepository.deleteReply = jest.fn().mockImplementation(() => Promise.resolve(expectedDeletedReply));
+    mockThreadRepository.getThreadById = vi.fn().mockImplementation(() => Promise.resolve(expectedThread));
+    mockThreadRepository.getCommentById = vi.fn().mockImplementation(() => Promise.resolve(expectedComment));
+    mockThreadRepository.getReplyById = vi.fn().mockImplementation(() => Promise.resolve(expectedReply));
+    mockThreadRepository.checkOwnerReply = vi.fn().mockImplementation(() => Promise.resolve(expectedCheckOwnerReply));
+    mockThreadRepository.deleteReply = vi.fn().mockImplementation(() => Promise.resolve(expectedDeletedReply));
 
     /** creating use case instance */
     const deleteReplyUseCase = new DeleteReplyUseCase({

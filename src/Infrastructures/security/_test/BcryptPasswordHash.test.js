@@ -6,7 +6,7 @@ describe('BcryptEncryptionHelper', () => {
   describe('hash function', () => {
     it('should encrypt password correctly', async () => {
       // Arrange
-      const spyHash = jest.spyOn(bcrypt, 'hash');
+      const spyHash = vi.spyOn(bcrypt, 'hash');
       const bcryptEncryptionHelper = new BcryptEncryptionHelper(bcrypt);
 
       // Action
