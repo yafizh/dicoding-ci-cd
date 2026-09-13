@@ -8,7 +8,7 @@ const routes = (handler) => [
     method: 'GET',
     path: '/',
     handler: () => ({
-      value: 'Hello world!',
+      value: 'Hello world!!',
     }),
   },
 ];

@@ -10,9 +10,16 @@ jobs:
     runs-on: ubuntu-latest
  
     steps:
-    - uses: actions/checkout@v2
-    - uses: akhileshns/heroku-deploy@v3.12.12
+    - name: SSH and deploy app
+      uses: appleboy/ssh-action@master
       with:
-        heroku_api_key: ${{secrets.HEROKU_API_KEY}}
-        heroku_app_name: "thawing-falls-57281"
-        heroku_email: "yafizzzz40@gmail.com"
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        port: ${{ secrets.SSH_PORT }}
+        script: |
+          cd ~/auth-api
+          git pull origin master
+          npm ci --omit=dev --no-audit --no-fund
+          npm run migrate up
+          pm2 restart auth-api
